@@ -27,6 +27,8 @@ function validate(data) {
   if(!Array.isArray(data[name]) || data[name].length>5000)throw Error("Controleer de gegevens in "+name+".");
   const ids=data[name].map(x=>x.id);if(ids.some(x=>typeof x!=="string"||!x)||new Set(ids).size!==ids.length)throw Error("De back-up bevat lege of dubbele identificaties.");
  }
+ for(const p of data.people)if(typeof p.name!=="string"||!p.name.trim()||typeof p.child!=="boolean")throw Error("Controleer het gezinslid.");
+ for(const r of data.recipes)if(typeof r.name!=="string"||!r.name.trim()||!Number.isInteger(r.persons)||r.persons<1||!Number.isInteger(r.minutes)||r.minutes<1||!Array.isArray(r.ingredients)||!Array.isArray(r.steps)||[...r.ingredients,...r.steps].some(s=>typeof s!=="string"||!s.trim()))throw Error("Controleer het recept en de kookstappen.");
  const events=[...data.events,...data.proposals.map(x=>x.event)];
  for(const e of events) {
   parse(e.date);if(!String(e.title||"").trim()||!timeOK(e.time)||!timeOK(e.end)||e.end<=e.time||!["none","daily","weekly","monthly"].includes(e.repeat||"none"))throw Error("Controleer de afspraak en begin-/eindtijd.");

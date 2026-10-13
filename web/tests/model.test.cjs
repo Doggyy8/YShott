@@ -51,3 +51,5 @@ test("Android-compatible backup keeps all fields and validates after JSON round 
  const d=fresh();assert.deepEqual(M.validate(JSON.parse(JSON.stringify(d))),d);
  assert.ok(d.people[0].color>0xffffffff-0x1000000);assert.equal(d.residence[0].days.length,d.residence[0].repeatsWeeks*7);
 });
+
+test("broken recipe data is rejected before import",()=>{const d=fresh();d.recipes[0].steps=null;assert.throws(()=>M.validate(d));});
