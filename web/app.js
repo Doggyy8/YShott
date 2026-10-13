@@ -99,7 +99,7 @@ function pinDialog(target,setup=false){if(setup)requireParent();dialog(setup?"Ou
  if(!await persist(data,""))throw Error("Controle kon niet worden bewaard.");
  if(!result.ok)throw Error("De pincode klopt niet.");
  prefs.child=target==="parent"?"":target;page="today";if(!await persist(data,""))throw Error("Kindmodus kon niet worden bewaard.");close();window.scrollTo(0,0);
- },"Verder");}
+ },setup?"Bewaren":"Verder");}
 async function sendChat(text){text=String(text).trim();if(!text)return;await persist({...data,messages:[...data.messages,{id:M.id(),person:child()||"papa",text,at:new Date().toISOString(),proposal:""}]},"Lokaal bericht bewaard.");if(child())speaking(text);}
 document.addEventListener("click",async ev=>{
  const target=ev.target.closest("button");if(!target)return;
