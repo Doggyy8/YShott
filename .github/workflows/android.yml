@@ -47,7 +47,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace && adb pull /sdcard/Android/data/nl.yshott.app/files/test-screenshots/ app/build/outputs/device-screenshots/
+          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace && mkdir -p app/build/outputs/device-screenshots && adb pull /data/local/tmp/yshott-screenshots/ app/build/outputs/device-screenshots/
       - name: Save test reports
         if: always()
         uses: actions/upload-artifact@v4

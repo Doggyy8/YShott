@@ -62,9 +62,14 @@ class PlannerDeviceTest {
         compose.waitForIdle()
         val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
         val directory = java.io.File(compose.activity.getExternalFilesDir(null), "test-screenshots").apply { mkdirs() }
-        java.io.FileOutputStream(java.io.File(directory, "$name.png")).use {
+        val output = java.io.File(directory, "$name.png")
+        java.io.FileOutputStream(output).use {
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
         bitmap.recycle()
+        // Android's test runner removes app storage after the tests. Keep shell-owned copies for CI.
+        val command = "mkdir -p /data/local/tmp/yshott-screenshots && cp '${output.absolutePath}' /data/local/tmp/yshott-screenshots/$name.png"
+        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes() }
     }
 }
