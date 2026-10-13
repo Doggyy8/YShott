@@ -81,6 +81,12 @@ class PlannerDeviceTest {
         store.setPin("2468")
         try {
             compose.onNodeWithText("Voorbeeld bekijken").performScrollTo().performClick()
+            screenshot("vandaag")
+            compose.onNodeWithText("Agenda",useUnmergedTree=true).performClick()
+            screenshot("maandagenda")
+            compose.onNodeWithText("Week").performClick()
+            screenshot("weekagenda")
+            compose.onNodeWithText("Vandaag",useUnmergedTree=true).performClick()
             compose.onNodeWithText("Bij papa").performClick()
             compose.onNodeWithText("Kindmodus: Mila").performClick()
             compose.onNodeWithText("Vier cijfers").performTextInput("2468")

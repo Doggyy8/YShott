@@ -3,7 +3,7 @@ import base64
 from pathlib import Path
 
 root = Path("app/build/outputs/device-screenshots")
-for name in ("vandaag", "agenda-na-herstel", "weekagenda", "kindmodus"):
+for name in ("vandaag", "maandagenda", "weekagenda", "kindmodus"):
     matches = list(root.rglob(name + ".png"))
     if matches:
         png = matches[0].read_bytes()

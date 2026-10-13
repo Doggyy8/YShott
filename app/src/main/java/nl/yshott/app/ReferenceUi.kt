@@ -268,6 +268,7 @@ private object ReferenceArt {
     }
 }
 @Composable internal fun ReferenceCalendar(day:LocalDate,view:String,data:PlannerData,onDay:(LocalDate)->Unit) {
+    Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
     val month=YearMonth.from(day);val first=day.minusDays((day.dayOfWeek.value-1).toLong())
     val cells=if(view=="Maand")PlannerRules.monthCells(month) else if(view=="Week")(0..6).map { first.plusDays(it.toLong()) } else listOf(day)
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
@@ -293,12 +294,21 @@ private object ReferenceArt {
                 }
             }
         }
-        if(view=="Maand")Spacer(Modifier.height(3.dp))
+
     }
     if(view=="Week") {
         Row(Modifier.fillMaxWidth().padding(top=8.dp).clip(RoundedCornerShape(10.dp))) {
-            cells.forEach { d -> Box(Modifier.weight(1f).height(22.dp).background(household(data,d)?.let(::houseColor)?:MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment=Alignment.Center) { if(d.dayOfWeek.value==2||d.dayOfWeek.value==6)Text(household(data,d)?.let { "Bij "+it.lowercase(UiDutch) }?:"",fontSize=10.sp,color=DesignInk) } }
+            val segments=mutableListOf<Pair<String?,Int>>()
+            cells.forEach { d ->
+                val name=household(data,d)
+                if(segments.lastOrNull()?.first==name&&segments.isNotEmpty()) {
+                    val last=segments.removeAt(segments.lastIndex);segments.add(name to last.second+1)
+                } else segments.add(name to 1)
+            }
+            segments.forEach { (name,count) -> Box(Modifier.weight(count.toFloat()).height(24.dp)
+                .background(name?.let(::houseColor)?:MaterialTheme.colorScheme.surfaceVariant),contentAlignment=Alignment.Center) {
+                Text(name?.let { "Bij "+it.lowercase(UiDutch) }?:"",fontSize=11.sp,fontWeight=FontWeight.Bold,color=DesignInk)
+            } }
         }
         Text("Verblijf "+(data.people.find { it.id==data.residence.firstOrNull { r->r.status=="active" }?.child }?.name?:""),fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
     } else if(view=="Maand") {
@@ -307,6 +317,7 @@ private object ReferenceArt {
                 Box(Modifier.size(15.dp).background(houseColor(name),CircleShape));Text(name,fontSize=12.sp)
             } }
         }
+    }
     }
 }
 @Composable internal fun ReferenceDayTitle(day:LocalDate,data:PlannerData) {

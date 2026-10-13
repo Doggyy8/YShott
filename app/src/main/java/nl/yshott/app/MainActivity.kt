@@ -142,7 +142,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
                 }, containerColor = Navy, contentColor = Color.White) { Icon(Icons.Outlined.Add, "Toevoegen") }
             }
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(top = 3.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(top = 3.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(if(child)8.dp else 12.dp)) {
                 val visibleEvents = data.events.filter { PlannerRules.occurs(it, day) && (!child || it.person == activePerson || it.relatedChild == activePerson) }.sortedBy { it.time }
                 val visibleTasks = data.tasks.filter { !child || it.person == activePerson }
                 when (page) {
@@ -349,7 +349,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
                             TextButton(onClick = { exportLauncher.launch("YShott-backup.json") }) { Text("Back-up opslaan") }
                             TextButton(onClick = { form = FormRequest("restore") }) { Text("Back-up herstellen") }
                         }
-                        YCard { Text("Over deze versie", fontWeight = FontWeight.Bold); Text("YShott 0.1.0 · native Android-testversie. Online diensten en apparaatmeldingen zijn nog niet aangesloten.", fontSize = 12.sp) }
+                        YCard { Text("Over deze versie", fontWeight = FontWeight.Bold); Text("YShott 0.1.1 · native Android-testversie. Online diensten en apparaatmeldingen zijn nog niet aangesloten.", fontSize = 12.sp) }
                     }
                 }
                 Text("Voorbeeldmodus · alleen op dit apparaat",fontSize=10.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,
