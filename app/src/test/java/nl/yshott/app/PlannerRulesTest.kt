@@ -52,9 +52,10 @@ class PlannerRulesTest {
         assertEquals("18:30", data.events.single().time)
     }
     @Test fun coParentDefaultNeverExposesTitlePlaceOrNotes() {
-        val e = Event(title = "Persoonlijke afspraak", date = "2026-10-12", place = "Adres", note = "Privé", private = false)
+        val e = Event(title = "Persoonlijke afspraak", date = "2026-10-12", place = "Adres", note = "Privé", private = false, relatedChild = "child-id", dropOff = "parent-id", pickUp = "other-parent")
         val visible = PlannerRules.visibleToCoParent(e, false)
         assertEquals("Bezet", visible.title); assertEquals("", visible.place); assertEquals("", visible.note)
+        assertEquals("", visible.relatedChild); assertEquals("", visible.dropOff); assertEquals("", visible.pickUp)
         assertEquals(e, PlannerRules.visibleToCoParent(e, true))
     }
     @Test fun inactiveResidenceProposalDoesNotBecomeActualSchedule() {
@@ -67,6 +68,27 @@ class PlannerRulesTest {
         assertTrue(text.contains("DTSTART:20261012T130000Z"))
         assertTrue(text.contains("SUMMARY:Les\\, afspraak"))
         assertTrue(text.contains("DESCRIPTION:a\\nb"))
+    }
+    @Test fun overlappingAppointmentsWarnOnlyForTheSameParticipants() {
+        val day = LocalDate.parse("2026-10-13")
+        val school = Event(id = "school", title = "School", date = day.toString(), time = "09:00", end = "10:00", person = "child")
+        val overlapping = Event(id = "other", title = "Tandarts", date = day.toString(), time = "09:30", end = "10:30", person = "child")
+        val unrelated = overlapping.copy(id = "unrelated", person = "another-child")
+        val adjacent = overlapping.copy(id = "adjacent", time = "10:00", end = "11:00")
+        assertEquals(listOf(overlapping), PlannerRules.conflicts(school, listOf(school, overlapping, unrelated, adjacent), day))
+    }
+    @Test fun pickingUpAChildCanConflictWithTheParentsOtherAppointment() {
+        val day = LocalDate.parse("2026-10-13")
+        val pickup = Event(title = "Ophalen", date = day.toString(), time = "15:00", end = "15:30", relatedChild = "child", pickUp = "parent")
+        val work = Event(title = "Werk", date = day.toString(), time = "15:15", end = "16:00", person = "parent")
+        assertEquals(listOf(work), PlannerRules.conflicts(pickup, listOf(work), day))
+    }
+    @Test fun overlapWarningsRespectRecurringDatesAndBounds() {
+        val day = LocalDate.parse("2026-10-20")
+        val repeated = Event(title = "Les", date = "2026-10-13", time = "09:00", end = "10:00", person = "child", repeat = "weekly", until = "2026-10-20")
+        val conflict = Event(title = "Andere les", date = day.toString(), time = "09:30", end = "10:30", person = "child")
+        assertEquals(listOf(repeated), PlannerRules.conflicts(conflict, listOf(repeated), day))
+        assertTrue(PlannerRules.conflicts(conflict.copy(date = "2026-10-27"), listOf(repeated), day.plusWeeks(1)).isEmpty())
     }
     @Test fun examplePlannerPassesValidation() {
         PlannerRules.validate(exampleData())
