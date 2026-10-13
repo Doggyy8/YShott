@@ -117,6 +117,22 @@ export function createAuthHandler(config: AuthConfig, transport: typeof fetch = 
       const signedIn = await api("/auth/v1/token?grant_type=password", { email, password });
       const session = signedIn.ok ? sessionOf(signedIn.body, email) : null;
       if (!session) return reply(401, { error: "invalid_credentials_or_unconfirmed_email" });
+      if (action === "login") {
+        const deviceToken = typeof body.device_refresh_token === "string" && body.device_refresh_token.length <= 1024
+          ? body.device_refresh_token : "";
+        let trustedSession: Json | null = null;
+        if (deviceToken) {
+          const refreshed = await api("/auth/v1/token?grant_type=refresh_token", { refresh_token: deviceToken });
+          trustedSession = refreshed.ok ? sessionOf(refreshed.body, email) : null;
+        }
+        // Password validation above creates a temporary session; never expose it before device proof.
+        const closed = await api("/auth/v1/logout?scope=local", {}, false, session.access_token as string);
+        if (!closed.ok) return reply(503, { error: "service_unavailable" });
+        if (trustedSession) return reply(200, { status: "signed_in", session: trustedSession });
+        const mailed = await api("/auth/v1/otp", { email, create_user: false });
+        if (!mailed.ok) return reply(503, { error: "verification_unavailable" });
+        return reply(200, { status: "device_verification_required" });
+      }
       return reply(200, { status: "signed_in", session });
     } catch {
       return reply(503, { error: "service_unavailable" });
