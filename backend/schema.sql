@@ -250,6 +250,12 @@ begin
   if item.id is null or not (yshott_private.is_admin(item.source_household) or yshott_private.is_admin(item.target_household)) then
     raise exception 'Admin required' using errcode='42501';
   end if;
+  -- Clear exceptions in both directions: reconnecting must not revive old full-details grants.
+  delete from public.yshott_calendar_grants g using public.yshott_calendar_events e
+  where g.event_id=e.id and (
+    (e.household_id=item.source_household and g.recipient_household=item.target_household) or
+    (e.household_id=item.target_household and g.recipient_household=item.source_household)
+  );
   update public.yshott_coparent_links set status='revoked',decided_by=auth.uid() where id=link;
 end $$;
 create function yshott_private.save_state(family uuid,expected_revision bigint,data jsonb) returns bigint
