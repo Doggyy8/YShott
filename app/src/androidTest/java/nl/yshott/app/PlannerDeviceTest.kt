@@ -60,16 +60,23 @@ class PlannerDeviceTest {
 
     private fun screenshot(name: String) {
         compose.waitForIdle()
-        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        val directory = java.io.File(compose.activity.getExternalFilesDir(null), "test-screenshots").apply { mkdirs() }
-        val output = java.io.File(directory, "$name.png")
-        java.io.FileOutputStream(output).use {
-            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        if (android.os.Build.VERSION.SDK_INT < 31) return
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            automation.executeShellCommand("mkdir -p /data/local/tmp/yshott-screenshots")
+        ).use { it.readBytes() }
+        // Write through shell stdin; app storage is removed by the Android test runner.
+        val target = "/data/local/tmp/yshott-screenshots/$name.png"
+        val streams = automation.executeShellCommandRw("dd of=$target")
+        val bitmap = automation.takeScreenshot()
+        android.os.ParcelFileDescriptor.AutoCloseOutputStream(streams[1]).use {
+            org.junit.Assert.assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
         }
         bitmap.recycle()
-        // Android's test runner removes app storage after the tests. Keep shell-owned copies for CI.
-        val command = "mkdir -p /data/local/tmp/yshott-screenshots && cp '${output.absolutePath}' /data/local/tmp/yshott-screenshots/$name.png"
-        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes() }
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(streams[0]).use { it.readBytes() }
+        val size = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            automation.executeShellCommand("wc -c $target")
+        ).use { it.bufferedReader().readText().trim().takeWhile(Char::isDigit).toLongOrNull() ?: 0L }
+        org.junit.Assert.assertTrue("The device screenshot must not be empty", size > 0)
     }
 }
