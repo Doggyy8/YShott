@@ -297,7 +297,7 @@ begin
   ) e),'[]'::jsonb);
 end $$;
 create function yshott_private.save_event(event uuid,family uuid,title text,starts_at timestamptz,ends_at timestamptz,location text,notes text) returns uuid
-language plpgsql security definer set search_path='' as $
+language plpgsql security definer set search_path='' as $$
 declare actor uuid:=yshott_private.verified_user(); item uuid:=coalesce(event,gen_random_uuid());
 begin
   if not yshott_private.is_member(family) then raise exception 'Member required' using errcode='42501'; end if;
@@ -308,9 +308,9 @@ begin
     where existing.household_id=family and (existing.owner_id=actor or yshott_private.is_admin(existing.household_id));
   if not found then raise exception 'Event owner required' using errcode='42501'; end if;
   return item;
-end $;
+end $$;
 create function yshott_private.share_event(event uuid,recipient uuid,full_details boolean) returns void
-language plpgsql security definer set search_path='' as $
+language plpgsql security definer set search_path='' as $$
 declare actor uuid:=yshott_private.verified_user(); item public.yshott_calendar_events;
 begin
   select * into item from public.yshott_calendar_events where id=event for update;
@@ -326,11 +326,11 @@ begin
   else
     delete from public.yshott_calendar_grants where event_id=event and recipient_household=recipient;
   end if;
-end $;
+end $$;
 create function public.yshott_save_event(event uuid,family uuid,title text,starts_at timestamptz,ends_at timestamptz,location text default '',notes text default '') returns uuid
-language sql security invoker set search_path='' as $ select yshott_private.save_event(event,family,title,starts_at,ends_at,location,notes); $;
+language sql security invoker set search_path='' as $$ select yshott_private.save_event(event,family,title,starts_at,ends_at,location,notes); $$;
 create function public.yshott_share_event(event uuid,recipient uuid,full_details boolean) returns void
-language sql security invoker set search_path='' as $ select yshott_private.share_event(event,recipient,full_details); $;
+language sql security invoker set search_path='' as $$ select yshott_private.share_event(event,recipient,full_details); $$;
 revoke execute on function public.yshott_save_event(uuid,uuid,text,timestamptz,timestamptz,text,text),
  public.yshott_share_event(uuid,uuid,boolean) from public,anon;
 grant execute on function public.yshott_save_event(uuid,uuid,text,timestamptz,timestamptz,text,text),
