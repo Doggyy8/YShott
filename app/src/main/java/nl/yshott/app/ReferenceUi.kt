@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+
 package nl.yshott.app
 
 import android.graphics.BitmapFactory
@@ -33,18 +35,22 @@ internal val DesignMint = Color(0xFFDDF4EA)
 internal val DesignPeach = Color(0xFFFFE7D8)
 internal val DesignLavender = Color(0xFFECE5FF)
 private val UiDutch = Locale.forLanguageTag("nl-NL")
-private val RoundedFont = FontFamily(Font(R.font.nunito, FontWeight.Normal))
+private val RoundedFont = FontFamily(
+    listOf(FontWeight.Normal,FontWeight.Medium,FontWeight.SemiBold,FontWeight.Bold,FontWeight.ExtraBold).map { weight ->
+        Font(R.font.nunito,weight=weight,variationSettings=FontVariation.Settings(FontVariation.weight(weight.weight)))
+    }
+)
 internal val ReferenceTypography = Typography().let { t -> t.copy(
-    displayLarge=t.displayLarge.copy(fontFamily=RoundedFont),
-    headlineLarge=t.headlineLarge.copy(fontFamily=RoundedFont,fontWeight=FontWeight.ExtraBold),
-    headlineMedium=t.headlineMedium.copy(fontFamily=RoundedFont,fontWeight=FontWeight.ExtraBold),
-    headlineSmall=t.headlineSmall.copy(fontFamily=RoundedFont,fontWeight=FontWeight.Bold),
-    titleLarge=t.titleLarge.copy(fontFamily=RoundedFont,fontWeight=FontWeight.Bold),
-    titleMedium=t.titleMedium.copy(fontFamily=RoundedFont,fontWeight=FontWeight.Bold),
-    titleSmall=t.titleSmall.copy(fontFamily=RoundedFont,fontWeight=FontWeight.Bold),
-    bodyLarge=t.bodyLarge.copy(fontFamily=RoundedFont),bodyMedium=t.bodyMedium.copy(fontFamily=RoundedFont),
-    bodySmall=t.bodySmall.copy(fontFamily=RoundedFont),labelLarge=t.labelLarge.copy(fontFamily=RoundedFont),
-    labelMedium=t.labelMedium.copy(fontFamily=RoundedFont),labelSmall=t.labelSmall.copy(fontFamily=RoundedFont)
+    displayLarge=t.displayLarge.copy(fontFamily=RoundedFont,letterSpacing=0.sp),
+    headlineLarge=t.headlineLarge.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.ExtraBold),
+    headlineMedium=t.headlineMedium.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.ExtraBold),
+    headlineSmall=t.headlineSmall.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.Bold),
+    titleLarge=t.titleLarge.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.Bold),
+    titleMedium=t.titleMedium.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.Bold),
+    titleSmall=t.titleSmall.copy(fontFamily=RoundedFont,letterSpacing=0.sp,fontWeight=FontWeight.Bold),
+    bodyLarge=t.bodyLarge.copy(fontFamily=RoundedFont,letterSpacing=0.sp),bodyMedium=t.bodyMedium.copy(fontFamily=RoundedFont,letterSpacing=0.sp),
+    bodySmall=t.bodySmall.copy(fontFamily=RoundedFont,letterSpacing=0.sp),labelLarge=t.labelLarge.copy(fontFamily=RoundedFont,letterSpacing=0.sp),
+    labelMedium=t.labelMedium.copy(fontFamily=RoundedFont,letterSpacing=0.sp),labelSmall=t.labelSmall.copy(fontFamily=RoundedFont,letterSpacing=0.sp)
 ) }
 private fun dayTitle(day:LocalDate)=day.format(DateTimeFormatter.ofPattern("EEEE d MMMM",UiDutch)).replaceFirstChar { it.titlecase(UiDutch) }
 private fun household(data:PlannerData,day:LocalDate,child:String=""):String? =
@@ -69,7 +75,9 @@ private object ReferenceArt {
         frames.getOrPut(index) {
             val source=atlas ?: BitmapFactory.decodeResource(context.resources,R.drawable.child_pictograms).also { atlas=it }
             val w=source.width/4; val h=source.height/3
-            android.graphics.Bitmap.createBitmap(source,(index%4)*w,(index/4)*h,w,h).asImageBitmap()
+            // Keep the transparent gutter out of adjacent sprite cells.
+            val inset=12
+            android.graphics.Bitmap.createBitmap(source,(index%4)*w+inset,(index/4)*h+inset,w-2*inset,h-2*inset).asImageBitmap()
         }
 }
 @Composable internal fun ReferencePicto(index:Int,description:String?,modifier:Modifier=Modifier) {
@@ -137,22 +145,22 @@ private object ReferenceArt {
         if(portrait!=null) {
             ReferencePicto(portrait,null,Modifier.size(49.dp).clip(CircleShape).background(Color.White))
             ReferencePicto(3,null,Modifier.size(45.dp))
-        } else ReferencePicto(index,null,Modifier.width(103.dp).height(88.dp))
-        Text(title,Modifier.weight(1f),fontSize=21.sp,fontWeight=FontWeight.ExtraBold,color=DesignInk)
+        } else ReferencePicto(index,null,Modifier.width(83.dp).height(80.dp))
+        Text(title,Modifier.weight(1f),fontSize=19.sp,fontWeight=FontWeight.ExtraBold,color=DesignInk)
         ReferenceListen("Luister: "+title,onListen,48)
     }
 }
 @Composable internal fun ReferenceChildTask(t:Task,speak:(String)->Unit,onDone:()->Unit) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(DesignMint).padding(10.dp),
         verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        ReferencePicto(referenceSymbol(t.title+" "+t.emoji),null,Modifier.width(105.dp).height(100.dp))
+        ReferencePicto(referenceSymbol(t.title+" "+t.emoji),null,Modifier.width(82.dp).height(96.dp))
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-            Text(t.title,fontSize=19.sp,fontWeight=FontWeight.ExtraBold,color=DesignInk)
+            Text(t.title,fontSize=18.sp,fontWeight=FontWeight.ExtraBold,color=DesignInk)
             ReferenceListen("Luister: "+t.title,{speak(t.title+". "+if(t.status=="pending")"Je ouder kijkt het nog na." else "Tik op het vinkje als je klaar bent.")},40)
         }
-        if(t.status=="open") FilledIconButton(onClick=onDone,modifier=Modifier.size(53.dp),shape=CircleShape,
+        if(t.status=="open") FilledIconButton(onClick=onDone,modifier=Modifier.size(48.dp),shape=CircleShape,
             colors=IconButtonDefaults.filledIconButtonColors(containerColor=Color(0xFF169966),contentColor=Color.White)) {
-            Icon(Icons.Outlined.Check,"Klusje klaar",Modifier.size(34.dp))
+            Icon(Icons.Outlined.Check,"Klusje klaar",Modifier.size(30.dp))
         } else {
             Icon(if(t.status=="pending") Icons.Outlined.HourglassEmpty else Icons.Outlined.CheckCircle,
                 if(t.status=="pending")"Wacht op je ouder" else "Klaar",Modifier.size(38.dp),tint=DesignInk)
@@ -194,7 +202,7 @@ private object ReferenceArt {
     val events=data.events.filter { PlannerRules.occurs(it,today)&&(!child||it.person==active||it.relatedChild==active) }.sortedBy { it.time }
     val tasks=data.tasks.filter { it.status=="open"&&(!child||it.person==active) }
     if(child) {
-        Row(verticalAlignment=Alignment.CenterVertically) { ReferencePicto(4,null,Modifier.size(78.dp));Text("Mijn dag",fontSize=32.sp,fontWeight=FontWeight.ExtraBold) }
+        Row(verticalAlignment=Alignment.CenterVertically) { ReferencePicto(4,null,Modifier.size(78.dp));Text("Mijn dag",modifier=Modifier.semantics { contentDescription="Overzicht van jouw dag" },fontSize=32.sp,fontWeight=FontWeight.ExtraBold) }
         if(stay!=null) ReferenceChildCard(3,"Bij "+stay.lowercase(UiDutch),houseColor(stay),{speak("Je bent vandaag bij "+stay)},if(stay.equals("Mama",true))1 else 0)
         events.take(2).forEach { e -> ReferenceChildCard(referenceSymbol(e.title+" "+e.emoji),e.title,if(referenceSymbol(e.title+" "+e.emoji)==6)DesignLavender else Color(0xFFE2F0FC),
             {speak(e.title+". Om "+e.time+". "+e.note)}) }

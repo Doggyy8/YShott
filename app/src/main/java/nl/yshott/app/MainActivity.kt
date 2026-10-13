@@ -130,6 +130,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
         val nav = if (child) listOf(NavItem("today", "Mijn dag", Icons.Outlined.WbSunny), NavItem("tasks", "Klusjes", Icons.Outlined.CheckCircleOutline), NavItem("rewards", "Beloningen", Icons.Outlined.CardGiftcard), NavItem("chat", "Chat", Icons.Outlined.ChatBubbleOutline))
             else listOf(NavItem("today", "Vandaag", Icons.Outlined.Home), NavItem("agenda", "Agenda", Icons.Outlined.CalendarMonth), NavItem("chat", "Chat", Icons.Outlined.ChatBubbleOutline), NavItem("more", "Meer", Icons.Outlined.MoreHoriz))
         var profileMenu by remember { mutableStateOf(false) }
+        val contentScroll = key(page,child) { rememberScrollState() }
         Scaffold(
             topBar = { ReferenceHeader(data,child,activePerson,
                 onChild = { pinGate = it }, onParent = { pinGate = "parent" },
@@ -142,7 +143,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
                 }, containerColor = Navy, contentColor = Color.White) { Icon(Icons.Outlined.Add, "Toevoegen") }
             }
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(top = 3.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(if(child)8.dp else 12.dp)) {
+            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(contentScroll).padding(horizontal = 18.dp).padding(top = 3.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(if(child)8.dp else 12.dp)) {
                 val visibleEvents = data.events.filter { PlannerRules.occurs(it, day) && (!child || it.person == activePerson || it.relatedChild == activePerson) }.sortedBy { it.time }
                 val visibleTasks = data.tasks.filter { !child || it.person == activePerson }
                 when (page) {
