@@ -73,7 +73,8 @@ private data class NavItem(val page: String, val label: String, val icon: androi
 
 @Composable private fun YShottApp(activity: MainActivity, speak: (String) -> Unit) {
     val store = remember { LocalStore(activity) }
-    var data by remember { mutableStateOf(PlannerData()) }
+    val initialLoad = remember { runCatching { store.load() } }
+    var data by remember { mutableStateOf(initialLoad.getOrNull() ?: PlannerData()) }
     var demo by rememberSaveable { mutableStateOf(false) }
     var page by rememberSaveable { mutableStateOf("today") }
     var dateText by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
@@ -84,10 +85,15 @@ private data class NavItem(val page: String, val label: String, val icon: androi
     var form by remember { mutableStateOf<FormRequest?>(null) }
     var pinGate by remember { mutableStateOf<String?>(null) }
     var toastText by remember { mutableStateOf("") }
-    var pendingExport by remember { mutableStateOf("") }
     var cooking by rememberSaveable { mutableStateOf("") }
     var list by rememberSaveable { mutableStateOf("Boodschappen") }
     fun notify(text: String) { toastText = text; Toast.makeText(activity, text, Toast.LENGTH_LONG).show() }
+    LaunchedEffect(Unit) {
+        if (demo && initialLoad.getOrNull() == null) {
+            demo = false
+            notify("De planner kon niet worden hersteld. De opgeslagen gegevens zijn niet overschreven.")
+        }
+    }
     fun change(next: PlannerData, message: String = "Bewaard op dit apparaat") {
         runCatching { store.save(next) }.onSuccess { data = next; notify(message) }.onFailure { notify(it.message ?: "Opslaan is niet gelukt") }
     }
@@ -98,7 +104,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
     }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) runCatching {
-            activity.contentResolver.openOutputStream(uri)?.use { it.write(pendingExport.toByteArray()) } ?: error("Geen bestandstoegang")
+            activity.contentResolver.openOutputStream(uri)?.use { it.write(appJson.encodeToString(data).toByteArray()) } ?: error("Geen bestandstoegang")
         }.onSuccess { notify("Bestand opgeslagen") }.onFailure { notify("Bestand kon niet worden opgeslagen") }
     }
     val calendarLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/calendar")) { uri ->
@@ -377,7 +383,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
                         YCard {
                             Text("Back-up", fontWeight = FontWeight.Bold)
                             Text("De lokale planner is versleuteld opgeslagen. Een geëxporteerde JSON-back-up is leesbaar: kies zelf een veilige bestemming.", fontSize = 12.sp)
-                            TextButton(onClick = { pendingExport = appJson.encodeToString(data); exportLauncher.launch("YShott-backup.json") }) { Text("Back-up opslaan") }
+                            TextButton(onClick = { exportLauncher.launch("YShott-backup.json") }) { Text("Back-up opslaan") }
                             TextButton(onClick = { form = FormRequest("restore") }) { Text("Back-up herstellen") }
                         }
                         YCard { Text("Over deze versie", fontWeight = FontWeight.Bold); Text("YShott 0.1.0 · native Android-testversie. Online diensten en apparaatmeldingen zijn nog niet aangesloten.", fontSize = 12.sp) }

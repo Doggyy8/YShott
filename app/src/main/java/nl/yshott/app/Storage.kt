@@ -36,6 +36,7 @@ class LocalStore(private val context: Context) {
         val c = Cipher.getInstance("AES/GCM/NoPadding")
         c.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
         return appJson.decodeFromString<PlannerData>(c.doFinal(bytes.copyOfRange(12, bytes.size)).toString(Charsets.UTF_8))
+            .also { PlannerRules.validate(it) }
     }
     fun save(data: PlannerData) {
         PlannerRules.validate(data)

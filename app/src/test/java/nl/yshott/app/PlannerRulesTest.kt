@@ -68,4 +68,33 @@ class PlannerRulesTest {
         assertTrue(text.contains("SUMMARY:Les\\, afspraak"))
         assertTrue(text.contains("DESCRIPTION:a\\nb"))
     }
+    @Test fun examplePlannerPassesValidation() {
+        PlannerRules.validate(exampleData())
+    }
+    @Test fun invalidRepeatEndNeverCrashesCalendar() {
+        val event = Event(title = "Les", date = "2026-10-12", repeat = "weekly", until = "geen datum")
+        assertFalse(PlannerRules.occurs(event, LocalDate.parse("2026-10-19")))
+    }
+    @Test(expected = IllegalArgumentException::class) fun invalidRepeatEndIsRejectedBeforeSaving() {
+        PlannerRules.validate(PlannerData(events = listOf(Event(title = "Les", date = "2026-10-12", until = "2026-02-30"))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun repeatCannotEndBeforeItStarts() {
+        PlannerRules.validate(PlannerData(events = listOf(Event(title = "Les", date = "2026-10-12", until = "2026-10-11"))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun malformedProposalCannotEnterPlanner() {
+        PlannerRules.validate(PlannerData(proposals = listOf(Proposal(event = Event(title = "Voorstel", date = "geen datum")))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun malformedMealBackupIsRejected() {
+        PlannerRules.validate(PlannerData(meals = listOf(Meal(date = "2026-02-30", title = "Pasta"))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun malformedResidenceBackupIsRejected() {
+        PlannerRules.validate(PlannerData(residence = listOf(Residence(child = "child", starts = "geen datum"))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun duplicateTaskIdentifiersAreRejected() {
+        val task = Task(id = "same", title = "Tas")
+        PlannerRules.validate(PlannerData(tasks = listOf(task, task.copy(title = "Kamer"))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun negativeRewardChargeIsRejected() {
+        PlannerRules.validate(PlannerData(rewardRequests = listOf(RewardRequest(person = "child", reward = "r", title = "IJs", points = -10))))
+    }
 }

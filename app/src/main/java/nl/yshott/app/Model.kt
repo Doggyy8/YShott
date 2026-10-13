@@ -41,7 +41,10 @@ object PlannerRules {
     fun occurs(event: Event, date: LocalDate): Boolean {
         val start = runCatching { LocalDate.parse(event.date) }.getOrNull() ?: return false
         if (date < start) return false
-        if (event.until.isNotEmpty() && date > LocalDate.parse(event.until)) return false
+        if (event.until.isNotEmpty()) {
+            val until = runCatching { LocalDate.parse(event.until) }.getOrNull() ?: return false
+            if (date > until) return false
+        }
         if (date == start) return true
         return when (event.repeat) {
             "daily" -> true
@@ -96,14 +99,32 @@ object PlannerRules {
     fun visibleToCoParent(e: Event, shareFullDetails: Boolean): Event =
         if (shareFullDetails) e else e.copy(title = "Bezet", note = "", place = "", person = "", emoji = "🔒")
     fun validate(data: PlannerData) {
-        require(data.people.map { it.id }.distinct().size == data.people.size)
+        fun unique(ids: List<String>) {
+            require(ids.all { it.isNotBlank() } && ids.distinct().size == ids.size) { "De back-up bevat lege of dubbele identificaties" }
+        }
+        listOf(data.people.map { it.id }, data.events.map { it.id }, data.tasks.map { it.id },
+            data.groceries.map { it.id }, data.recipes.map { it.id }, data.meals.map { it.id },
+            data.rewards.map { it.id }, data.rewardRequests.map { it.id }, data.messages.map { it.id },
+            data.proposals.map { it.id }, data.residence.map { it.id }).forEach(::unique)
         require(data.tasks.all { it.points >= 0 })
         require(data.rewards.all { it.points > 0 })
-        require(data.events.all {
-            runCatching { LocalDate.parse(it.date); LocalTime.parse(it.time); LocalTime.parse(it.end) }.isSuccess &&
-            it.end > it.time
-        }) { "Controleer de datum en begin-/eindtijd" }
-        require(data.residence.all { it.repeatsWeeks in 1..8 && it.days.size == it.repeatsWeeks * 7 })
+        require(data.rewardRequests.all { it.points > 0 && it.status in setOf("pending", "approved", "rejected") })
+        require(data.tasks.all { it.status in setOf("open", "pending", "done") &&
+            (it.date.isEmpty() || runCatching { LocalDate.parse(it.date) }.isSuccess) }) { "Controleer de taakdatum en status" }
+        val events = data.events + data.proposals.map { it.event }
+        require(events.all { event -> runCatching {
+            val start = LocalDate.parse(event.date)
+            val from = LocalTime.parse(event.time)
+            val to = LocalTime.parse(event.end)
+            to > from && event.repeat in setOf("none", "daily", "weekly", "monthly") &&
+                (event.until.isEmpty() || LocalDate.parse(event.until) >= start)
+        }.getOrDefault(false) }) { "Controleer de datum, begin-/eindtijd en einddatum van de herhaling" }
+        require(data.proposals.all { it.status in setOf("pending", "approved", "rejected") })
+        require(data.meals.all { runCatching { LocalDate.parse(it.date) }.isSuccess &&
+            it.slot in setOf("Ontbijt", "Lunch", "Diner") }) { "Controleer de maaltijd en datum" }
+        require(data.residence.all { it.repeatsWeeks in 1..8 && it.days.size == it.repeatsWeeks * 7 &&
+            it.days.all(String::isNotBlank) && it.status in setOf("concept", "active") &&
+            runCatching { LocalDate.parse(it.starts); LocalTime.parse(it.switchTime) }.isSuccess }) { "Controleer het verblijfsschema" }
         require(data.people.all { points(data, it.id) >= 0 }) { "Deze wijziging zou al bestede punten verwijderen" }
     }
 }
