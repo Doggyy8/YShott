@@ -91,7 +91,19 @@ select pg_temp.denied(format('select public.yshott_rotate_code(%L)',:'a'),'Regul
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
 select public.yshott_revoke_member(:'a','00000000-0000-0000-0000-000000000003');
+select public.yshott_share_event(:'event_a',:'b',true);
 select public.yshott_revoke_link(:'link');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select pg_temp.assert_true(not exists(select 1 from public.yshott_calendar_events where id=:'event_a'),'Link revocation also removes active full-details exceptions');
+select public.yshott_request_join(:'code_a','B','co_parent',:'b') as reconnect_result \gset
+select (:'reconnect_result'::jsonb->>'link_id') as reconnect \gset
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select public.yshott_decide_link(:'reconnect',true);
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+select public.yshott_calendar_for(:'b','2026-10-13 00:00+02','2026-10-14 00:00+02') as reconnected_calendar \gset
+select pg_temp.assert_true(:'reconnected_calendar'::jsonb->0->>'title'='Bezet','Reconnecting cannot revive old full-details exceptions');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select public.yshott_revoke_link(:'reconnect');
 select public.yshott_rotate_code(:'a') as new_code \gset
 select pg_temp.assert_true(:'new_code'<>:'code_a','Rotation changes unique invitation');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000003',true);
