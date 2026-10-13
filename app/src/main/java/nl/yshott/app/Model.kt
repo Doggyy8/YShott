@@ -53,6 +53,25 @@ object PlannerRules {
             else -> false
         }
     }
+    fun conflicts(candidate: Event, events: List<Event>, on: LocalDate): List<Event> {
+        if (!occurs(candidate, on)) return emptyList()
+        val from = runCatching { LocalTime.parse(candidate.time) }.getOrNull() ?: return emptyList()
+        val until = runCatching { LocalTime.parse(candidate.end) }.getOrNull() ?: return emptyList()
+        if (until <= from) return emptyList()
+        fun participants(event: Event) = listOf(event.person, event.relatedChild, event.dropOff, event.pickUp)
+            .filter { it.isNotBlank() }.toSet()
+        val candidatePeople = participants(candidate)
+        return events.filter { event ->
+            if (event.id == candidate.id || !occurs(event, on)) false
+            else {
+                val otherPeople = participants(event)
+                val samePeople = candidatePeople.isEmpty() || otherPeople.isEmpty() || candidatePeople.intersect(otherPeople).isNotEmpty()
+                val otherFrom = runCatching { LocalTime.parse(event.time) }.getOrNull()
+                val otherUntil = runCatching { LocalTime.parse(event.end) }.getOrNull()
+                samePeople && otherFrom != null && otherUntil != null && from < otherUntil && otherFrom < until
+            }
+        }
+    }
     fun monthCells(month: YearMonth): List<LocalDate> {
         val first = month.atDay(1).minusDays((month.atDay(1).dayOfWeek.value - 1).toLong())
         val count = (((month.atDay(1).dayOfWeek.value - 1 + month.lengthOfMonth()) + 6) / 7) * 7
@@ -97,7 +116,7 @@ object PlannerRules {
         return r.days[(distance % r.days.size).toInt()]
     }
     fun visibleToCoParent(e: Event, shareFullDetails: Boolean): Event =
-        if (shareFullDetails) e else e.copy(title = "Bezet", note = "", place = "", person = "", emoji = "🔒")
+        if (shareFullDetails) e else e.copy(title = "Bezet", note = "", place = "", person = "", emoji = "🔒", relatedChild = "", dropOff = "", pickUp = "")
     fun validate(data: PlannerData) {
         fun unique(ids: List<String>) {
             require(ids.all { it.isNotBlank() } && ids.distinct().size == ids.size) { "De back-up bevat lege of dubbele identificaties" }
