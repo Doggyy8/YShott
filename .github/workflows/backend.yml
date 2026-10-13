@@ -42,4 +42,18 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f backend/tests/auth-fixture.sql
           psql -v ON_ERROR_STOP=1 -f backend/schema.sql
+          psql -v ON_ERROR_STOP=1 -f backend/auth.sql
           psql -v ON_ERROR_STOP=1 -f backend/tests/access.sql
+          psql -v ON_ERROR_STOP=1 -f backend/tests/auth-access.sql
+  auth-handler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.3.3
+      - name: Check authentication entry point
+        run: |
+          deno check backend/functions/yshott-auth/index.ts
+          deno test backend/functions/yshott-auth/handler_test.ts
