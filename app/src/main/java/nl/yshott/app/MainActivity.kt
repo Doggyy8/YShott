@@ -42,11 +42,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val Dutch = Locale.forLanguageTag("nl-NL")
-private val Navy = Color(0xFF18354B)
+private val Navy = Color(0xFF10334C)
 private val Mint = Color(0xFFDDF3EB)
 private val Lavender = Color(0xFFEAE5FB)
 private val Peach = Color(0xFFFBEADF)
-private val Surface = Color(0xFFF6F9FC)
+private val Surface = Color(0xFFF4F8FC)
 private fun dateTitle(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Dutch))
 private fun fmtDay(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEE d MMM", Dutch))
 
@@ -120,8 +120,8 @@ private data class NavItem(val page: String, val label: String, val icon: androi
     }
     val dark = data.settings.dark
     val scheme = if (dark) darkColorScheme(primary = Color(0xFFAAC9E2), background = Color(0xFF111C28), surface = Color(0xFF1B2A3A), secondaryContainer = Color(0xFF28473F))
-    else lightColorScheme(primary = Navy, onPrimary = Color.White, secondaryContainer = Mint, onSecondaryContainer = Navy, background = Surface, surface = Color.White, outlineVariant = Color(0xFFE1E8EE))
-    MaterialTheme(colorScheme = scheme) {
+    else lightColorScheme(primary = Navy, onPrimary = Color.White, secondaryContainer = Mint, onSecondaryContainer = Navy, background = Surface, surface = Color.White, outlineVariant = Color(0xFFE1E8EE), surfaceVariant = Color(0xFFEAF1F6), onSurface = Navy, onBackground = Navy)
+    MaterialTheme(colorScheme = scheme, typography = ReferenceTypography) {
         if (!demo) {
             Landing(onExample = ::openExample, onUnavailable = { notify("De echte accountkoppeling wordt nog aangesloten. Deze versie verstuurt nog geen bevestigingsmail.") })
             return@MaterialTheme
@@ -131,74 +131,37 @@ private data class NavItem(val page: String, val label: String, val icon: androi
             else listOf(NavItem("today", "Vandaag", Icons.Outlined.Home), NavItem("agenda", "Agenda", Icons.Outlined.CalendarMonth), NavItem("chat", "Chat", Icons.Outlined.ChatBubbleOutline), NavItem("more", "Meer", Icons.Outlined.MoreHoriz))
         var profileMenu by remember { mutableStateOf(false) }
         Scaffold(
-            topBar = { TopAppBar(
-                title = { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Home, "YShott"); Spacer(Modifier.width(8.dp)); Text("YShott", fontWeight = FontWeight.Bold) } },
-                actions = {
-                    if (child) {
-                        IconButton(onClick = { speak("Dit is jouw dag. Tik op een luidspreker om te horen wat je gaat doen.") }) { Icon(Icons.Outlined.VolumeUp, "Luister naar uitleg") }
-                        IconButton(onClick = { pinGate = "parent" }) { Icon(Icons.Outlined.Lock, "Ouderinstellingen openen met pincode") }
-                    } else Box {
-                        TextButton(onClick = { profileMenu = true }) { Text("Ons gezin ▾") }
-                        DropdownMenu(expanded = profileMenu, onDismissRequest = { profileMenu = false }) {
-                            data.people.filter { it.child }.forEach { p ->
-                                DropdownMenuItem(text = { Text(p.emoji + "  Kindmodus: " + p.name) }, onClick = { profileMenu = false; pinGate = p.id })
-                            }
-                        }
-                    }
-                }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)) },
-            bottomBar = { NavigationBar(containerColor = MaterialTheme.colorScheme.surface) { nav.forEach { n ->
-                NavigationBarItem(selected = page == n.page, onClick = { page = n.page; cooking = ""; if (child) speak(n.label) },
-                    icon = { Icon(n.icon, n.label) }, label = { Text(n.label, fontSize = if (child) 12.sp else 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.secondaryContainer))
-            } } },
+            topBar = { ReferenceHeader(data,child,activePerson,
+                onChild = { pinGate = it }, onParent = { pinGate = "parent" },
+                onListen = { speak("Dit is jouw dag. Tik op een luidspreker om te horen wat je gaat doen.") },
+                onNotifications = { notify("Online meldingen worden nog aangesloten.") }) },
+            bottomBar = { ReferenceNav(child,page) { page = it; cooking = ""; if(child) speak(when(it) { "today" -> "Mijn dag"; "tasks" -> "Klusjes"; "rewards" -> "Beloningen"; else -> "Chat" }) } },
             floatingActionButton = {
-                if (!child && page in listOf("agenda", "tasks", "shopping", "recipes", "rewards", "chat")) FloatingActionButton(onClick = {
+                if (!child && page in listOf("tasks", "shopping", "recipes", "rewards", "chat")) FloatingActionButton(onClick = {
                     form = FormRequest(when(page) { "agenda" -> "event"; "tasks" -> "task"; "shopping" -> "grocery"; "recipes" -> "recipe"; "rewards" -> "reward"; else -> "proposal" }, date = dateText)
                 }, containerColor = Navy, contentColor = Color.White) { Icon(Icons.Outlined.Add, "Toevoegen") }
             }
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 84.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                AssistChip(onClick = { notify("Voorbeeldmodus: gegevens worden alleen op deze telefoon bewaard.") }, label = { Text("Testversie • voorbeeldmodus", fontSize = 10.sp) }, leadingIcon = { Icon(Icons.Outlined.Info, null, Modifier.size(14.dp)) })
+            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(top = 3.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 val visibleEvents = data.events.filter { PlannerRules.occurs(it, day) && (!child || it.person == activePerson || it.relatedChild == activePerson) }.sortedBy { it.time }
                 val visibleTasks = data.tasks.filter { !child || it.person == activePerson }
                 when (page) {
-                    "today" -> {
-                        Text(dateTitle(LocalDate.now()).replaceFirstChar { it.titlecase(Dutch) }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(if (child) "☀️ Mijn dag" else "Onze dag", fontSize = if (child) 34.sp else 30.sp, fontWeight = FontWeight.Bold)
-                        val residence = data.residence.firstOrNull { it.status == "active" && (!child || it.child == activePerson) }
-                        val household = residence?.let { PlannerRules.residenceAt(it, LocalDate.now()) }
-                        if (household != null && (child || "residence" in data.settings.homeCards)) {
-                            PictoCard(if (household == "Mama") "👩🏠" else "👨🏠", "Bij " + household.lowercase(Dutch), if (child) null else data.people.find { it.id == residence.child }?.name, Mint, { speak("Je bent vandaag bij " + household) })
-                        }
-                        if (child || "agenda" in data.settings.homeCards) {
-                            val todays = data.events.filter { PlannerRules.occurs(it, LocalDate.now()) && (!child || it.person == activePerson || it.relatedChild == activePerson) }.sortedBy { it.time }
-                            if (!child) SectionTitle("Vandaag") { page = "agenda"; dateText = LocalDate.now().toString() }
-                            if (todays.isEmpty()) EmptyCard("🌿", "Geen afspraken vandaag")
-                            todays.take(if (child) 2 else 6).forEach { e -> EventCard(e, data, child, speak, { form = FormRequest("event", e.id) }) }
-                        }
-                        if (child || "tasks" in data.settings.homeCards) {
-                            val tasks = visibleTasks.filter { it.status == "open" }
-                            if (!child) SectionTitle("Nog te doen") { page = "tasks" }
-                            tasks.take(if (child) 1 else 3).forEach { t -> TaskCard(t, data, child, speak, onDone = {
-                                runCatching { PlannerRules.completeTask(data, t.id, child, activePerson) }.onSuccess { change(it, if (child && t.parentCheck) "Je klusje wacht op controle van een ouder" else "Klusje klaar") }.onFailure { notify(it.message ?: "Probeer opnieuw") }
-                            }, onEdit = { form = FormRequest("task", t.id) }) }
-                        }
-                        if (!child && "meal" in data.settings.homeCards) {
-                            SectionTitle("Vanavond") { page = "meals" }
-                            val m = data.meals.firstOrNull { it.date == LocalDate.now().toString() && it.slot == "Diner" }
-                            YCard { Text("🍽️  " + (m?.title ?: "Wat eten we vandaag?"), fontWeight = FontWeight.Medium); TextButton(onClick = { if (m?.recipe?.isNotEmpty() == true) { cooking = m.recipe; page = "cook" } else form = FormRequest("meal", m?.id ?: "", slot = "Diner") }) { Text(if (m?.recipe?.isNotEmpty() == true) "Recept bekijken →" else "Maaltijd toevoegen") } }
-                        }
-                        if (child) PictoCard("⭐", "Goed gedaan!", null, Color(0xFFFFF2CA), { speak("Goed gedaan! Jij helpt mee.") })
-                    }
+                    "today" -> ReferenceToday(data,child,activePerson,speak,
+                        onAgenda = { page = "agenda"; dateText = LocalDate.now().toString() },
+                        onTasks = { page = "tasks" }, onCook = { cooking = it; page = "cook" },
+                        onMeal = { form = FormRequest("meal", slot = "Diner") },
+                        onEdit = { form = FormRequest("event", it.id) },
+                        onDone = { t -> runCatching { PlannerRules.completeTask(data,t.id,child,activePerson) }
+                            .onSuccess { change(it,if(child&&t.parentCheck)"Je klusje wacht op controle van een ouder" else "Klusje klaar") }
+                            .onFailure { notify(it.message ?: "Probeer opnieuw") } },
+                        onSettings = { page = "settings" })
                     "agenda" -> {
-                        ScreenTitle("Agenda")
-                        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                            listOf("Dag", "Week", "Maand").forEachIndexed { index, text -> SegmentedButton(selected = calendarView == text, onClick = { calendarView = text }, shape = SegmentedButtonDefaults.itemShape(index, 3)) { Text(text) } }
-                        }
-                        CalendarGrid(day, calendarView, data, onDay = { dateText = it.toString() }, speak = speak)
-                        SectionTitle(dateTitle(day).replaceFirstChar { it.titlecase(Dutch) }) { dateText = LocalDate.now().toString() }
+                        ReferenceAgendaTitle { form = FormRequest("event", date = dateText) }
+                        ReferenceViewSwitch(calendarView) { calendarView = it }
+                        ReferenceCalendar(day,calendarView,data) { dateText = it.toString() }
+                        ReferenceDayTitle(day,data)
                         if (visibleEvents.isEmpty()) EmptyCard("📅", "Geen afspraken op deze dag")
-                        visibleEvents.forEach { e -> EventCard(e, data, false, speak, { form = FormRequest("event", e.id) }) }
+                        visibleEvents.forEach { e -> ReferenceEventCard(e,data,true,{ form = FormRequest("event",e.id) }) }
                         data.proposals.filter { it.status == "pending" && it.event.date == dateText }.forEach { p ->
                             YCard {
                                 Text("Voorstel: " + p.event.title, fontWeight = FontWeight.Bold); Text(p.event.time + " · wacht op akkoord")
@@ -389,6 +352,8 @@ private data class NavItem(val page: String, val label: String, val icon: androi
                         YCard { Text("Over deze versie", fontWeight = FontWeight.Bold); Text("YShott 0.1.0 · native Android-testversie. Online diensten en apparaatmeldingen zijn nog niet aangesloten.", fontSize = 12.sp) }
                     }
                 }
+                Text("Voorbeeldmodus · alleen op dit apparaat",fontSize=10.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier=Modifier.fillMaxWidth(),textAlign=androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
         if (pinGate != null) PinDialog(store, onDismiss = { pinGate = null }, onAccepted = { value ->
@@ -449,7 +414,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
     }
 }
 @Composable private fun EventCard(e: Event, data: PlannerData, child: Boolean, speak: (String) -> Unit, onEdit: () -> Unit) {
-    if (child) PictoCard(e.emoji, e.title, null, if (e.emoji == "🏊") Lavender else Color(0xFFE2F0FC), { speak(e.title + ". Om " + e.time + ". " + e.note) })
+    if (child) ReferenceChildCard(referenceSymbol(e.title+" "+e.emoji),e.title,if(e.emoji=="🏊")DesignLavender else Color(0xFFE2F0FC),{speak(e.title+". Om "+e.time+". "+e.note)})
     else YCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(e.time, Modifier.width(58.dp), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -459,6 +424,7 @@ private data class NavItem(val page: String, val label: String, val icon: androi
     }
 }
 @Composable private fun TaskCard(t: Task, data: PlannerData, child: Boolean, speak: (String) -> Unit, onDone: () -> Unit, onEdit: () -> Unit) {
+    if(child) { ReferenceChildTask(t,speak,onDone); return }
     YCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(t.emoji, fontSize = if (child) 46.sp else 30.sp); Spacer(Modifier.width(12.dp))

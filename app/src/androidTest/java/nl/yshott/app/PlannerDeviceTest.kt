@@ -31,6 +31,8 @@ class PlannerDeviceTest {
         compose.activityRule.scenario.recreate()
         compose.onNodeWithText("Rotatiecontrole").performScrollTo().assertIsDisplayed()
         screenshot("agenda-na-herstel")
+        compose.onNodeWithText("Week").performClick()
+        screenshot("weekagenda")
 
         val loaded = LocalStore(compose.activity).load()!!
         val event = loaded.events.single { it.title == "Rotatiecontrole" }
@@ -70,6 +72,24 @@ class PlannerDeviceTest {
             .performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Annuleren").performClick()
         org.junit.Assert.assertFalse(LocalStore(compose.activity).load()!!.events.any { it.title == "Tweede overlapcontrole" })
+    }
+
+    @Test fun childModeUsesIllustrationsAndKeepsParentGate() {
+        val store=LocalStore(compose.activity)
+        store.childProfile=""
+        store.save(exampleData())
+        store.setPin("2468")
+        try {
+            compose.onNodeWithText("Voorbeeld bekijken").performScrollTo().performClick()
+            compose.onNodeWithText("Bij papa").performClick()
+            compose.onNodeWithText("Kindmodus: Mila").performClick()
+            compose.onNodeWithText("Vier cijfers").performTextInput("2468")
+            compose.onNodeWithText("Verder").performClick()
+            compose.onNodeWithContentDescription("Klusje klaar").performScrollTo().assertIsDisplayed()
+            screenshot("kindmodus")
+            compose.onNodeWithContentDescription("Ouderinstellingen openen met pincode").performClick()
+            compose.onNodeWithText("Vier cijfers").assertIsDisplayed()
+        } finally { store.childProfile="" }
     }
 
     private fun screenshot(name: String) {
