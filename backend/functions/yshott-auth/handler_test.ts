@@ -50,8 +50,8 @@ Deno.test("PIN rate limit prevents provider password attempts", async () => {
  assert(result.status===429); assert(f.calls.length===1);
 });
 Deno.test("Login uses a private derived password and strips provider fields", async () => {
- const f = fixture([allowed,{ body:{...session,internal_secret:"never-return"} }]);
- const response=await f.handler(request({ ...login,email:" Parent@Example.Invalid " }));
+ const f = fixture([allowed,{ body:session },{ body:{...session,internal_secret:"never-return"} },{body:{}}]);
+ const response=await f.handler(request({ ...login,email:" Parent@Example.Invalid ",device_refresh_token:"existing-device-refresh" }));
  const body=await response.json();
  assert(response.status===200); assert(body.session.user_id==="fixture-user");
  assert(f.calls[0].headers.get("apikey")===config.secretKey);
@@ -126,4 +126,18 @@ Deno.test("Insecure configuration is refused", () => {
  let refused=false;
  try { createAuthHandler({...config,url:"http://example.invalid"}); } catch { refused=true; }
  assert(refused);
+});
+
+Deno.test("Correct PIN alone cannot issue a session on a new device", async () => {
+ const f=fixture([allowed,{body:session},{body:{}},{body:{}}]);
+ const result=await f.handler(request(login)); const body=await result.json();
+ assert(result.status===200 && body.status==="device_verification_required" && !body.session);
+ assert(f.calls[2].url.searchParams.get("scope")==="local");
+ assert(f.calls[3].url.pathname==="/auth/v1/otp" && f.calls[3].body.create_user===false);
+});
+Deno.test("A refresh token from another email cannot authorize this device", async () => {
+ const f=fixture([allowed,{body:session},{body:{...session,user:{...session.user,email:"other@example.invalid"}}},{body:{}},{body:{}}]);
+ const result=await f.handler(request({...login,device_refresh_token:"other-user-token"}));
+ const body=await result.json();
+ assert(body.status==="device_verification_required" && !body.session);
 });
