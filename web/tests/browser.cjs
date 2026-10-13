@@ -38,6 +38,15 @@ async function shot(page,name){await page.evaluate(()=>document.fonts.ready);awa
   for(const size of [{width:320,height:640},{width:412,height:915},{width:1440,height:1000}]){
    await page.setViewportSize(size);const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false,"No horizontal overflow at "+size.width);
   }
+  const local=await browser.newContext({viewport:{width:412,height:915}});
+  const portable=await local.newPage();portable.on("pageerror",e=>errors.push(e.message));
+  await portable.goto("file://"+path.join(root,"index.html"));
+  await portable.getByRole("button",{name:"Voorbeeld bekijken"}).click();
+  await portable.getByRole("heading",{name:"Onze dag"}).waitFor();
+  await portable.reload();
+  await portable.getByRole("button",{name:"Mijn lokale planner openen"}).click();
+  await portable.getByRole("heading",{name:"Onze dag"}).waitFor();
+  await local.close();
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(out,"summary.json"),JSON.stringify({passed:true,checks:["mobile calendar views","event survives reload","encrypted storage","recipe ingredients","child PIN gate","parent approval points","responsive layouts"],pageErrors:errors},null,2));
   console.log("Browser checks passed: mobile/desktop, encrypted reload, groceries, child gate and parent-approved points.");
