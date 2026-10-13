@@ -23,8 +23,9 @@ jobs:
         with:
           gradle-version: '8.9'
       - uses: android-actions/setup-android@v3
-      - name: Prepare Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          log-accepted-android-sdk-licenses: false
       - name: Generate the Gradle wrapper
         run: gradle wrapper --gradle-version 8.9
       - name: Check and build Android app
