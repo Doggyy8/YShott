@@ -603,6 +603,15 @@ private fun <T> List<T>.upsert(value: T, id: (T) -> String): List<T> = filterNot
                     SelectPerson("Voor wie?"); SelectPerson("Betreft welk kind?", "relatedChild", true)
                     SelectPerson("Wie brengt?", "dropOff"); SelectPerson("Wie haalt op?", "pickUp")
                     Input("Locatie", "place"); Input("Notities", "note", multiple = true); Input("Pictogram (emoji)", "emoji")
+                    val overlapping = runCatching {
+                        val candidate = Event(id = if(request.type == "event") request.id else "preview", title = v("title"), date = v("date"), time = v("time"), end = v("end"),
+                            person = v("person"), relatedChild = v("relatedChild"), dropOff = v("dropOff"), pickUp = v("pickUp"), repeat = v("repeat"), until = v("until"))
+                        PlannerRules.conflicts(candidate, data.events.filterNot { it.id == v("previous") }, LocalDate.parse(v("date")))
+                    }.getOrDefault(emptyList())
+                    if(overlapping.isNotEmpty()) Text(
+                        "Let op: op deze dag overlapt dit met " + overlapping.joinToString { it.title } + ". Je kunt de tijden aanpassen of toch bewaren.",
+                        color = MaterialTheme.colorScheme.error, fontSize = 12.sp
+                    )
                     Text("Herhaling", fontSize = 12.sp)
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                         listOf("none" to "Geen", "daily" to "Dagelijks", "weekly" to "Wekelijks", "monthly" to "Maandelijks").forEach { (key, text) ->
