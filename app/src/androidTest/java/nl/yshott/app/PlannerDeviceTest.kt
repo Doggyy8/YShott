@@ -58,6 +58,20 @@ class PlannerDeviceTest {
         screenshot("boodschappen")
     }
 
+    @Test fun overlappingAppointmentShowsAWarningBeforeSaving() {
+        compose.onNodeWithText("Voorbeeld bekijken").performScrollTo().performClick()
+        compose.onNodeWithText("Agenda", useUnmergedTree = true).performClick()
+        compose.onNodeWithContentDescription("Toevoegen").performClick()
+        compose.onNodeWithText("Naam").performTextInput("Eerste overlapcontrole")
+        compose.onNodeWithText("Bewaren").performClick()
+        compose.onNodeWithContentDescription("Toevoegen").performClick()
+        compose.onNodeWithText("Naam").performTextInput("Tweede overlapcontrole")
+        compose.onNodeWithText("Let op: op deze dag overlapt dit met", substring = true)
+            .performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Annuleren").performClick()
+        org.junit.Assert.assertFalse(LocalStore(compose.activity).load()!!.events.any { it.title == "Tweede overlapcontrole" })
+    }
+
     private fun screenshot(name: String) {
         compose.waitForIdle()
         if (android.os.Build.VERSION.SDK_INT < 31) return
