@@ -1,34 +1,31 @@
 # YShott
 
-Zelfstandige Nederlandstalige Android-familieplanner voor gezinnen en co-ouders.
+Native Android family planner in Kotlin and Jetpack Compose.
 
-## Goedgekeurde functies
+## Current status
+This branch is an explicit local example version. It is not yet a production service. Calendar month/week/day, tasks with parent approval, points and rewards, shopping and staples, meals and cooking steps, local proposals, residence examples, child pictograms and Dutch speech are implemented for build verification.
 
-- Eigen accounts met e-mailadres, zelfgekozen viercijferige pincode en geverifieerde e-mail; gezinnen met unieke code en beheerdergoedkeuring.
-- Ouderbeheerde kinderaccounts zonder eigen e-mailadres.
-- Dag-, week- en maandagenda, herhalingen, ophalen/brengen en zelf te ontwerpen verblijfsschema's.
-- Externe agenda's: Google, Outlook/Microsoft 365, Apple en ICS/iCal. Partner ziet volledige afspraken; co-ouder standaard bezet/vrij, met expliciete uitzonderingen.
-- Kopieerbare en intrekbare alleen-lezen agenda-abonnementslink.
-- Taken, klusjes, oudercontrole, punten en goedgekeurde beloningen per huishouden.
-- Boodschappenlijsten, vaste boodschappen, weekmenu, recepten zoeken met AI, ingrediënten toevoegen en kookweergave.
-- Gezinschat, co-ouderchat, privéberichten, foto's en afspraak-/wijzigingsvoorstellen die na goedkeuring in de agenda komen.
-- Bewuste tijdelijke locatiedeling, herinneringen, stille uren en ouderbeheer van kindinstellingen.
-- Kindmodus met grote herkenbare pictogrammen, eigen foto's en gesproken uitleg, bruikbaar zonder te kunnen lezen.
+Real email authentication, household membership approval, multi-account synchronization, external calendar subscriptions, online chat, AI recipe lookup, location sharing and push notifications remain to be connected and tested. Medication is excluded.
 
-Medicatie is niet opgenomen.
+## Build
+Java 17 and Android SDK 35. The included Gradle 8.9 wrapper verifies its distribution checksum; no separate Gradle installation is required.
 
-## Ontwerp en levering
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug
+./gradlew connectedDebugAndroidTest # with an Android device or emulator attached
+```
 
-Telefoon staat centraal. Lichte basis met diepblauw en mint, optionele donkere modus. Oudernavigatie: Vandaag, Agenda, Chat en Meer. Kindnavigatie: Mijn dag, Klusjes, Beloningen en Chat.
+GitHub Actions installs supported SDK packages explicitly, runs domain tests, lint, APK assembly and Android 15 emulator smoke tests, and retains the test APK for 30 days. The smoke tests cover saving an appointment across activity recreation, encrypted storage round trips and recipe ingredients reaching the shopping list. Device screenshots and test reports are retained for 14 days.
 
-De beoogde levering omvat de Android-APK, broncode, back-upmogelijkheden en update-instructies.
+A debug APK is for testing; stable release signing must be configured before distributing durable updates. Passing emulator tests does not verify the app on the user's physical phone or validate the pending online services.
 
-## Budget en status
+## Data and backups
+Example data is encrypted locally using Android Keystore. Exported JSON backups contain readable data: store them privately. Production data must be isolated by household and enforce permissions on the server.
 
-Budget: EUR 0 per maand. Alleen gratis diensten binnen hun quota; geen betaalde upgrades activeren.
+The planner reloads its saved data when Android recreates the activity. Invalid dates, repetition end dates, proposals, residence schedules and duplicate identifiers are rejected before a backup can replace the local planner. Corrupt encrypted files are reported without silently replacing existing data.
 
-Het plan en ontwerp zijn goedgekeurd. De native Android-app en online backend worden nog gebouwd. Er is nog geen APK beschikbaar.
+## Development
+Package: nl.yshott.app. Minimum Android 8 (API 26). Dependencies are pinned in Gradle files. Keep source in GitHub; create a branch, run checks, review changes and preserve the release signing key before publishing updates.
 
-## Beveiliging
-
-Geen persoonsgegevens, wachtwoorden, API-geheimen of ondertekeningssleutels in deze openbare repository. Geheime configuratie blijft buiten APK en broncode. Toegangscontrole voor huishoudens en kinderen wordt server-side gehandhaafd.
+## Budget
+No paid infrastructure is provisioned by this source commit. Free services have usage limits. Credentials and private signing keys must never be committed.
