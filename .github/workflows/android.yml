@@ -21,13 +21,11 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
           log-accepted-android-sdk-licenses: false
-      - name: Generate the Gradle wrapper
-        run: gradle wrapper --gradle-version 8.9
       - name: Check and build Android app
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug --no-daemon --stacktrace
       - name: Save installable test APK
@@ -49,7 +47,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace
+          script: ./gradlew connectedDebugAndroidTest --no-daemon --stacktrace && adb pull /sdcard/Android/data/nl.yshott.app/files/test-screenshots/ app/build/outputs/device-screenshots/
       - name: Save test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,5 +58,6 @@ jobs:
             app/build/reports/lint-results-debug.html
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
+            app/build/outputs/device-screenshots/
           if-no-files-found: ignore
           retention-days: 14

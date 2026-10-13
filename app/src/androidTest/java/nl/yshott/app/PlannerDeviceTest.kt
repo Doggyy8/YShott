@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -20,6 +21,7 @@ class PlannerDeviceTest {
 
     @Test fun appointmentSurvivesActivityRecreationAndCanBeExported() {
         compose.onNodeWithText("Voorbeeld bekijken").performScrollTo().performClick()
+        screenshot("vandaag")
         compose.onNodeWithText("Agenda", useUnmergedTree = true).performClick()
         compose.onNodeWithContentDescription("Toevoegen").performClick()
         compose.onNodeWithText("Naam").performTextInput("Rotatiecontrole")
@@ -28,6 +30,7 @@ class PlannerDeviceTest {
 
         compose.activityRule.scenario.recreate()
         compose.onNodeWithText("Rotatiecontrole").performScrollTo().assertIsDisplayed()
+        screenshot("agenda-na-herstel")
 
         val loaded = LocalStore(compose.activity).load()!!
         val event = loaded.events.single { it.title == "Rotatiecontrole" }
@@ -42,5 +45,26 @@ class PlannerDeviceTest {
         assertEquals(data, store.load())
         val encrypted = java.io.File(compose.activity.filesDir, "planner-demo.enc").readBytes()
         assertFalse(encrypted.toString(Charsets.UTF_8).contains("Opslagcontrole"))
+    }
+
+    @Test fun recipeIngredientsReachShoppingList() {
+        compose.onNodeWithText("Voorbeeld bekijken").performScrollTo().performClick()
+        compose.onNodeWithText("Meer").performClick()
+        compose.onNodeWithText("📖 Recepten").performScrollTo().performClick()
+        compose.onNodeWithText("🛒 Ingrediënten op de lijst").performScrollTo().performClick()
+        compose.onNodeWithText("400 g pasta").performScrollTo().assertIsDisplayed()
+        val groceries = LocalStore(compose.activity).load()!!.groceries
+        org.junit.Assert.assertTrue(groceries.any { it.name == "400 g pasta" && !it.done })
+        screenshot("boodschappen")
+    }
+
+    private fun screenshot(name: String) {
+        compose.waitForIdle()
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val directory = java.io.File(compose.activity.getExternalFilesDir(null), "test-screenshots").apply { mkdirs() }
+        java.io.FileOutputStream(java.io.File(directory, "$name.png")).use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        bitmap.recycle()
     }
 }
