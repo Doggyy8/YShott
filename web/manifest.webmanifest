@@ -1,0 +1,19 @@
+{
+  "name": "YShott · Samen geregeld",
+  "short_name": "YShott",
+  "description": "Familieplanner voor jullie dag.",
+  "lang": "nl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f8fc",
+  "theme_color": "#10334c",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
