@@ -140,7 +140,7 @@ class IrisClassifier(context:Context):Closeable {
         // The user films outdoors. Demote clearly indoor-only labels, but
         // never remove a valid garden cultivar completely.
         val outside=JSONObject(contextMask)
-        val allowed=outside.optJSONArray("outdoor")
+        val allowed=outside.optJSONObject("masks")?.optJSONArray("outdoor")
         if(allowed!=null) {
             val namesAllowed=(0 until allowed.length()).map{allowed.optString(it)}.toSet()
             for(i in combined.indices) if(labels[i] !in namesAllowed)combined[i]*=0.25f
