@@ -1,4 +1,4 @@
-# PlantScan AI — Android-app voor tuininventarisatie (MVP 0.2.1)
+# PlantScan AI — Android-app voor tuininventarisatie (MVP 0.3.0)
 
 Een Nederlandstalige **native Android-app** die met videobeelden planten helpt inventariseren en een PDF-rapport exporteert. De app is ontworpen voor APK-installatie via een gratis GitHub Actions-build, **zonder betaalde plantenherkennings-API**.
 
@@ -104,3 +104,21 @@ Introduceer een getraind instance-segmentation/detectiemodel voor plantenregio's
 
 ### Praktijktest
 Film één bekende plant met scherp zicht op blad en bloem. Selecteer de plant handmatig, controleer de beste vijf voorstellen en probeer daarna dezelfde plant vanuit een tweede hoek. Verzamel bij foutieve uitkomsten minimaal vijf gemarkeerde plantvoorbeelden voor een gerichte volgende verbetering.
+
+
+## Versie 0.3.0 — foto voorop (20 november 2026)
+
+- Een eigen botanisch startscherm in groene huisstijl, zonder PictureThis-merken of beschermde afbeeldingen.
+- Camera, galerij, EXIF-rotatie en verkleinde foto's voor efficiënte analyse.
+- Eenmalige Nederlandstalige fotohandleiding, later opnieuw te openen.
+- Foto's worden met Iris 9 herkend. Een tweede foto van dezelfde plant combineert de volledige soortenverdelingen.
+- Verplichte online controle vóór het fotoresultaat: maximaal twee voorgestelde wetenschappelijke namen worden in het openbare iNaturalist-register gecontroleerd. De foto wordt niet geüpload. Bij een netwerkfout verschijnt een foutmelding met opnieuw proberen.
+- Deze online controle valideert alleen de soortnaam, niet de foto zelf. Er is nog geen gratis tweede online beeldherkenner zonder sleutel geïntegreerd.
+- Bestaande videofuncties, handmatige correcties en PDF blijven bereikbaar in de oudere projectinterface.
+- Iris 10-code is voorbereid, maar Iris 10 is niet actief: de geadverteerde modelbestanden gaven tijdens de GitHub-build een HTTP 404. De beschikbare Iris 9-gewichten blijven daarom actief totdat de Iris 10-download aantoonbaar werkt.
+
+### APK-installatie
+
+Bij een geslaagde build publiceert GitHub Actions een test-APK onder PlantScanAI-v0.3.0.apk.
+De debug-ondertekening kan afwijken van de ondertekening van een eerdere installatie.
+Exporteer eerdere inventarisaties voordat je bij een installatieconflict de oude app verwijdert.
