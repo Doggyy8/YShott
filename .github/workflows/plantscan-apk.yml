@@ -1,0 +1,40 @@
+name: Bouw Android APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [plantscan-ai]
+  pull_request:
+    branches: [plantscan-ai]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Installeer Android SDK 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Download gratis Iris 9 model
+        run: python3 PlantScanAI/tools/fetch_model.py
+      - name: Bouw APK
+        run: cd PlantScanAI && gradle --no-daemon :app:assembleDebug
+      - name: Publiceer APK als artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlantScanAI-debug-apk
+          path: PlantScanAI/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
