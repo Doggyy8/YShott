@@ -33,10 +33,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Download gratis Iris 9 model
+      - name: Download gratis Iris 10 modellen
         run: python3 PlantScanAI/tools/fetch_model.py
       - name: Bouw APK
         run: cd PlantScanAI && gradle --no-daemon :app:assembleDebug
+      - name: Controleer dat APK bestaat
+        run: |
+          test -s PlantScanAI/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh PlantScanAI/app/build/outputs/apk/debug/app-debug.apk
       - name: Publiceer APK als artifact
         uses: actions/upload-artifact@v4
         with:
@@ -49,11 +53,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create plantscan-ai-v0.2.1 \
-            "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.2.1.apk" \
+          gh release create plantscan-ai-v0.3.0 \
+            "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.3.0.apk" \
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
-            --title "PlantScan AI v0.2.1 — Android testversie" \
-            --notes "Testversie met offline Iris 9 herkenning. De automatische telling is voorlopig en moet handmatig worden gecontroleerd." \
+            --title "PlantScan AI v0.3.0 — Android testversie" \
+            --notes "Testversie met Iris 10, fototutorial en verplichte online iNaturalist-controle voor fotoresultaten. De online controle is een naamcheck, geen tweede beeldherkenningsmodel. De automatische videotelling is voorlopig." \
             --prerelease
 
