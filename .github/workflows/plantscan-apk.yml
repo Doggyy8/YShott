@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [plantscan-ai]
 
+concurrency:
+  group: plantscan-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -53,11 +57,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create plantscan-ai-v0.3.0 \
-            "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.3.0.apk" \
-            --repo "${{ github.repository }}" \
-            --target "${{ github.sha }}" \
-            --title "PlantScan AI v0.3.0 — Android testversie" \
-            --notes "Testversie met Iris 9, fototutorial en verplichte online iNaturalist-controle voor fotoresultaten. De online controle is een naamcheck, geen tweede beeldherkenningsmodel. De automatische videotelling is voorlopig." \
-            --prerelease
-
+          if gh release view plantscan-ai-v0.3.0 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload plantscan-ai-v0.3.0 \
+              "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.3.0.apk" \
+              --clobber --repo "${{ github.repository }}"
+          else
+            gh release create plantscan-ai-v0.3.0 \
+              "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.3.0.apk" \
+              --repo "${{ github.repository }}" \
+              --target "${{ github.sha }}" \
+              --title "PlantScan AI v0.3.0 — Android testversie" \
+              --notes "Fotoherkenning via Iris 9, verplichte online iNaturalist-soortnaamcontrole en videotools. Tweede beeldherkennings-AI is niet geïntegreerd." \
+              --prerelease
+          fi
