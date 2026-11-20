@@ -243,7 +243,9 @@ class PhotoActivity : AppCompatActivity() {
             var prior:Bitmap?=null
             try {
                 photo=loadPhoto(uri)
-                val target=secondOf
+                val target=secondOf?.let { chosen ->
+                    store.records.firstOrNull { it.id == chosen.id } ?: chosen
+                }
                 if(target!=null)prior=BitmapFactory.decodeFile(target.photo)
                 runOnUiThread{status.text="Iris 9 analyseert je foto..."}
                 val guesses=IrisClassifier(this).use {it.identifyMany(listOfNotNull(photo,prior))}
