@@ -150,7 +150,7 @@ class PhotoActivity : AppCompatActivity() {
         })
         root.addView(features)
         gap(root,17)
-        root.addView(label("Herkenning met Iris 10 (CC BY 4.0). Voor elke foto wordt vóór het resultaat online de soortnaam in iNaturalist opgezocht. Dit is geen tweede beeldherkennings-AI.",12f,muted))
+        root.addView(label("Herkenning met Iris 9 (CC BY 4.0). Voor elke foto wordt vóór het resultaat online de soortnaam in iNaturalist opgezocht. Dit is geen tweede beeldherkennings-AI.",12f,muted))
     }
 
     private fun tutorial() {
@@ -245,8 +245,8 @@ class PhotoActivity : AppCompatActivity() {
                 photo=loadPhoto(uri)
                 val target=secondOf
                 if(target!=null)prior=BitmapFactory.decodeFile(target.photo)
-                runOnUiThread{status.text="Iris 10 analyseert je foto..."}
-                val guesses=Iris10Classifier(this).use {it.identifyMany(listOfNotNull(photo,prior))}
+                runOnUiThread{status.text="Iris 9 analyseert je foto..."}
+                val guesses=IrisClassifier(this).use {it.identifyMany(listOfNotNull(photo,prior))}
                 runOnUiThread{status.text="Online soortnamen controleren..."}
                 val check=OnlineTaxonomy.check(guesses)
                 val top=guesses.firstOrNull()
@@ -286,7 +286,7 @@ class PhotoActivity : AppCompatActivity() {
 
     private fun showResult(p:PlantObservation,check:OnlineTaxonCheck?) {
         screen("Herkenningsresultaat",
-            if(check!=null)"Iris 10 + online soortnamenregister" else "Eerder opgeslagen waarneming")
+            if(check!=null)"Iris 9 + online soortnamenregister" else "Eerder opgeslagen waarneming")
         val photo=BitmapFactory.decodeFile(p.photo)
         if(photo!=null) {
             val view=ImageView(this).apply{
