@@ -27,7 +27,8 @@ jobs:
           echo "SDK_MANAGER=$SDK_MANAGER" >> "$GITHUB_ENV"
           "$SDK_MANAGER" --version
       - name: Installeer Android SDK 35
-        run: "$SDK_MANAGER" 'platforms;android-35' 'build-tools;35.0.0'
+        run: |
+          "$SDK_MANAGER" 'platforms;android-35' 'build-tools;35.0.0'
       - name: Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
