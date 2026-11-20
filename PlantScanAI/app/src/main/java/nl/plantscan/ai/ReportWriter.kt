@@ -99,7 +99,7 @@ class ReportWriter(private val context:Context) {
             }
             if(y>625f)page()
             rule();y+=22f
-            paragraph("Techniek: Iris 10 (Iris 9 + botanische encoder) (brunopaiva15, CC BY 4.0) voor offline soortvoorstellen. " +
+            paragraph("Techniek: Iris 9 (brunopaiva15, CC BY 4.0) voor offline soortvoorstellen. " +
                 "Vegetatiegebieden worden met een eenvoudige kleurheuristiek voorgesteld; dit is geen gevalideerde individuele plantendetector. " +
                 "Online diensten worden niet vereist voor deze PDF.",42f,500f,10f,15f)
             finish()

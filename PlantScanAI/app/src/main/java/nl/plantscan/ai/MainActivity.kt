@@ -46,6 +46,7 @@ class MainActivity:AppCompatActivity() {
     private var video:VideoView?=null
     private var overlay:VideoMarksView?=null
     private var ticker:Runnable?=null
+    private var refineTarget:PlantObservation?=null
 
     private val openVideo=registerForActivityResult(ActivityResultContracts.OpenDocument()){ uri->
         if(uri!=null) {
@@ -160,7 +161,7 @@ class MainActivity:AppCompatActivity() {
             root.addView(review)
             gap(root)
         }
-        root.addView(text("Privacy: video's en foto's worden lokaal op je toestel verwerkt. De soortherkenning draait offline met Iris 10. Alleen de optionele Nederlandse-naamzoekfunctie gebruikt internet.",12f,quiet))
+        root.addView(text("Privacy: video's en foto's worden lokaal op je toestel verwerkt. De soortherkenning draait offline met Iris 9. Alleen de optionele Nederlandse-naamzoekfunctie gebruikt internet.",12f,quiet))
         gap(root,7)
         root.addView(text("Let op: automatisch getelde exemplaren zijn voorlopige schattingen. Controleer het aantal per plant in de resultatenlijst.",12f,quiet))
     }
@@ -187,13 +188,13 @@ class MainActivity:AppCompatActivity() {
         AlertDialog.Builder(this).setTitle("Video analyseren?")
             .setMessage("De vorige videosessie en bijbehorende waarnemingen worden vervangen. Maak eerst een PDF als je de bestaande resultaten wilt bewaren.")
             .setPositiveButton("Start analyse"){_,_->
-                store.clearForNewVideo(uri.toString());scanCurrent()
+                refineTarget=null;store.clearForNewVideo(uri.toString());scanCurrent()
             }.setNegativeButton("Annuleren",null).show()
     }
     private fun scanCurrent() {
         if(busy)return
         val uri=Uri.parse(store.videoUri)
-        mount("Video analyseren","De app zoekt voorlopige plantenregio's en vraagt Iris 10 om soortvoorstellen.")
+        mount("Video analyseren","De app zoekt voorlopige plantenregio's en vraagt Iris 9 om soortvoorstellen.")
         val panel=card();root.addView(panel)
         val spinner=ProgressBar(this)
         panel.addView(spinner,LinearLayout.LayoutParams(dp(52),dp(52)))
@@ -248,6 +249,13 @@ class MainActivity:AppCompatActivity() {
             c.addView(top)
             gap(c,12)
             c.addView(button("Controleren / wijzigen",true){edit(p)})
+            if(store.videoUri.isNotBlank()) {
+                gap(c,6)
+                c.addView(button("🔎 Extra videobeeld voor betere herkenning",true) {
+                    refineTarget=p
+                    showVideo()
+                })
+            }
             if(store.records.any{it.id!=p.id && it.scientific==p.scientific}) {
                 gap(c,6)
                 c.addView(button("Samenvoegen met dubbele detectie",true){mergePlant(p)})
@@ -357,11 +365,17 @@ class MainActivity:AppCompatActivity() {
     }
     private fun showVideo() {
         if(store.videoUri.isBlank()){showHome();return}
-        mount("Video terugkijken","Gekleurde kaders tonen voorlopige detecties. Tik op een kader om de plant te corrigeren.")
-        root.addView(button("← Terug naar resultaten",true){showResults()})
+        mount("Video terugkijken",if(refineTarget!=null)
+            "Selecteer dezelfde plant op een ander videomoment. Twee handmatig gekozen beelden worden samen beoordeeld."
+            else "Gekleurde kaders tonen voorlopige detecties. Tik op een kader om de plant te corrigeren.")
+        root.addView(button("← Terug naar resultaten",true){refineTarget=null;showResults()})
         gap(root,14)
         val frame=FrameLayout(this).apply{background=background(Color.BLACK,14)}
-        val vv=VideoView(this).apply {setVideoURI(Uri.parse(store.videoUri))}
+        val vv=VideoView(this).apply {
+            setVideoURI(Uri.parse(store.videoUri))
+            val startAt=refineTarget?.firstMs?.toInt()
+            if(startAt!=null)setOnPreparedListener{seekTo(startAt)}
+        }
         frame.addView(vv,FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(270)))
         val marks=VideoMarksView(this){edit(it)}
         marks.plants=store.records
@@ -410,9 +424,29 @@ class MainActivity:AppCompatActivity() {
             d.dismiss()
             worker.execute {
                 try {
-                    val o=VideoScanner(this,store).classifyManual(bitmap,time,rect)
+                    val existing=refineTarget
+                    val prior=if(existing!=null && !existing.group && existing.manual) existing.photo else null
+                    val o=VideoScanner(this,store).classifyManual(bitmap,time,rect,prior)
                     runOnUiThread {
-                        store.records.add(o);store.save();showResults();toast("Plant toegevoegd — controleer de suggesties")
+                        if(existing!=null) {
+                            existing.alternatives=o.alternatives
+                            existing.confidence=o.confidence
+                            existing.scientific=o.scientific
+                            existing.photo=o.photo
+                            existing.confirmed=false
+                            existing.manual=true
+                            existing.rect=o.rect
+                            existing.group=false
+                            existing.samples.add(time)
+                            existing.lastMs=maxOf(existing.lastMs,time)
+                            existing.firstMs=minOf(existing.firstMs,time)
+                            refineTarget=null
+                            toast("Nieuwe herkenning: controleer de voorgestelde soort")
+                        }else {
+                            store.records.add(o)
+                            toast("Plant toegevoegd — controleer de suggesties")
+                        }
+                        store.save();showResults()
                     }
                 }catch(e:Exception){runOnUiThread{error(e)}}
                 finally{bitmap.recycle()}
