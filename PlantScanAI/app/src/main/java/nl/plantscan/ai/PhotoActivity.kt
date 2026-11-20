@@ -255,7 +255,7 @@ class PhotoActivity : AppCompatActivity() {
                 runOnUiThread{
                     val obs=if(target!=null) target.apply{
                         scientific=recognized;confidence=top?.probability?:0f
-                        alternatives=guesses;photo=photoFile
+                        alternatives=guesses;this.photo=photoFile
                         dutch=if(check.scientific.equals(top?.name,true))check.dutch else ""
                         confirmed=false;manual=true;sourceType="photo"
                     } else PlantObservation(
