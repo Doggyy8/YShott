@@ -205,7 +205,8 @@ class IrisClassifier(context:Context):Closeable {
                 max(1,(image.height*scale).toInt()),true)
         } else image
         val sq=square(resized)
-        val patch=Bitmap.createScaledBitmap(sq,320,320,true)
+        val scaled=Bitmap.createScaledBitmap(sq,320,320,true)
+        val patch=if(scaled===image)scaled.copy(Bitmap.Config.ARGB_8888,false) else scaled
         if(sq!==image && sq!==resized && sq!==patch)sq.recycle()
         if(resized!==image && resized!==patch)resized.recycle()
         return patch
@@ -243,7 +244,7 @@ class IrisClassifier(context:Context):Closeable {
             total+=s
         }
         if(total<=0.0)return null
-        for(i in encoderProb.indices)encoderProb[i]=(encoderProb[i]/total).toFloat()
+        for(i in encoderProb.indices)encoderProb[i]=(encoderProb[i].toDouble()/total).toFloat()
         val baseGrouped=FloatArray(speciesIds.size)
         for(i in baseScores.indices)baseGrouped[iris9ToSpecies[i]]+=baseScores[i]
         val logs=DoubleArray(speciesIds.size)
@@ -262,7 +263,7 @@ class IrisClassifier(context:Context):Closeable {
             divisor+=n
         }
         if(divisor<=0.0)return null
-        for(i in scores.indices)scores[i]=(scores[i]/divisor).toFloat()
+        for(i in scores.indices)scores[i]=(scores[i].toDouble()/divisor).toFloat()
         return scores
     }
     @Synchronized fun identify(source:Bitmap):List<SpeciesGuess> {

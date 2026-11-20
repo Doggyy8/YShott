@@ -160,7 +160,7 @@ class MainActivity:AppCompatActivity() {
             root.addView(review)
             gap(root)
         }
-        root.addView(text("Privacy: video's en foto's worden lokaal op je toestel verwerkt. De soortherkenning draait offline met Iris 9. Alleen de optionele Nederlandse-naamzoekfunctie gebruikt internet.",12f,quiet))
+        root.addView(text("Privacy: video's en foto's worden lokaal op je toestel verwerkt. De soortherkenning draait offline met Iris 10. Alleen de optionele Nederlandse-naamzoekfunctie gebruikt internet.",12f,quiet))
         gap(root,7)
         root.addView(text("Let op: automatisch getelde exemplaren zijn voorlopige schattingen. Controleer het aantal per plant in de resultatenlijst.",12f,quiet))
     }
@@ -193,7 +193,7 @@ class MainActivity:AppCompatActivity() {
     private fun scanCurrent() {
         if(busy)return
         val uri=Uri.parse(store.videoUri)
-        mount("Video analyseren","De app zoekt voorlopige plantenregio's en vraagt Iris 9 om soortvoorstellen.")
+        mount("Video analyseren","De app zoekt voorlopige plantenregio's en vraagt Iris 10 om soortvoorstellen.")
         val panel=card();root.addView(panel)
         val spinner=ProgressBar(this)
         panel.addView(spinner,LinearLayout.LayoutParams(dp(52),dp(52)))

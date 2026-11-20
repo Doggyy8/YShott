@@ -49,11 +49,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create plantscan-ai-v0.1.1 \
-            "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.1.1.apk" \
+          gh release create plantscan-ai-v0.2.0 \
+            "PlantScanAI/app/build/outputs/apk/debug/app-debug.apk#PlantScanAI-v0.2.0.apk" \
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
-            --title "PlantScan AI v0.1.1 — Android testversie" \
+            --title "PlantScan AI v0.2.0 — Android testversie" \
             --notes "Testversie met offline Iris 9 herkenning. De automatische telling is voorlopig en moet handmatig worden gecontroleerd." \
             --prerelease
 
