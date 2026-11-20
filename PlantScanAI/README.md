@@ -1,4 +1,4 @@
-# PlantScan AI — Android-app voor tuininventarisatie (MVP 0.2.0)
+# PlantScan AI — Android-app voor tuininventarisatie (MVP 0.2.1)
 
 Een Nederlandstalige **native Android-app** die met videobeelden planten helpt inventariseren en een PDF-rapport exporteert. De app is ontworpen voor APK-installatie via een gratis GitHub Actions-build, **zonder betaalde plantenherkennings-API**.
 
@@ -92,7 +92,7 @@ Groenherkenning kan bladeren onderscheiden van sommige achtergronden maar faalt 
 
 Introduceer een getraind instance-segmentation/detectiemodel voor plantenregio's, gevolgd door objecttracking met expliciete onzekerheidsregistratie. Voor een onafhankelijke online fallback: pas een dienst gebruiken nadat API, gratis gebruiksvoorwaarden en de licentie expliciet zijn geverifieerd; nooit een publieke API-sleutel in de app opnemen.
 
-## Versie 0.2.0: herkenning met hogere beeldkwaliteit en veiligere voorstellen
+## Versie 0.2.1: herkenning met hogere beeldkwaliteit en veiligere voorstellen
 - Analyseer videobeelden op maximaal 1000 px in plaats van 480 px.
 - Lees dichtstbijzijnde werkelijke videoframes, niet uitsluitend sync/keyframes.
 - Negeer videobeelden zonder gedetecteerde vegetatie in plaats van willekeurig de volledige foto te classificeren.
