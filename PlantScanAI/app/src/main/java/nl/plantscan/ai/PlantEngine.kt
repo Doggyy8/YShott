@@ -36,7 +36,8 @@ data class PlantObservation(
     var group: Boolean = false,
     var confirmed: Boolean = false,
     var notes: String = "",
-    var manual: Boolean = false
+    var manual: Boolean = false,
+    var sourceType: String = "video"
 ) {
     fun reviewNeeded(): Boolean = !confirmed && (scientific=="Onbekend" || group || confidence < 0.85f ||
             alternatives.size > 1 && confidence - alternatives[1].probability < 0.25f)
@@ -50,7 +51,7 @@ data class PlantObservation(
         put("samples", JSONArray().apply {samples.forEach { put(it) }})
         put("rect", JSONArray().put(rect.left).put(rect.top).put(rect.right).put(rect.bottom))
         put("photo",photo);put("count",count);put("group",group)
-        put("confirmed",confirmed);put("notes",notes);put("manual",manual)
+        put("confirmed",confirmed);put("notes",notes);put("manual",manual);put("sourceType",sourceType)
     }
     companion object {
         fun fromJson(o:JSONObject):PlantObservation {
@@ -67,7 +68,8 @@ data class PlantObservation(
                 samples=(0 until ts.length()).map{ts.optLong(it)}.toMutableList(),
                 rect=RectF(r.optDouble(0).toFloat(),r.optDouble(1).toFloat(),r.optDouble(2).toFloat(),r.optDouble(3).toFloat()),
                 photo=o.optString("photo"),count=o.optInt("count",1),group=o.optBoolean("group"),
-                confirmed=o.optBoolean("confirmed"),notes=o.optString("notes"),manual=o.optBoolean("manual")
+                confirmed=o.optBoolean("confirmed"),notes=o.optString("notes"),manual=o.optBoolean("manual"),
+                sourceType=o.optString("sourceType","video")
             )
         }
     }
