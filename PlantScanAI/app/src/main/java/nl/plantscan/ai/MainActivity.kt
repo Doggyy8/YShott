@@ -106,7 +106,7 @@ class MainActivity:AppCompatActivity() {
     private fun mount(title:String,subtitle:String):LinearLayout {
         ticker?.let{handler.removeCallbacks(it)};ticker=null
         video?.stopPlayback();video=null;overlay=null
-        scroll=ScrollView(this).apply {setBackgroundColor(bg);fillViewport=true}
+        scroll=ScrollView(this).apply {setBackgroundColor(bg);isFillViewport=true}
         root=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL
             setPadding(dp(18),dp(25),dp(18),dp(26))}
         scroll.addView(root)
