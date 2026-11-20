@@ -33,7 +33,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Download gratis Iris 10 modellen
+      - name: Download gecontroleerd Iris 9 model
         run: python3 PlantScanAI/tools/fetch_model.py
       - name: Bouw APK
         run: cd PlantScanAI && gradle --no-daemon :app:assembleDebug
@@ -58,6 +58,6 @@ jobs:
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
             --title "PlantScan AI v0.3.0 — Android testversie" \
-            --notes "Testversie met Iris 10, fototutorial en verplichte online iNaturalist-controle voor fotoresultaten. De online controle is een naamcheck, geen tweede beeldherkenningsmodel. De automatische videotelling is voorlopig." \
+            --notes "Testversie met Iris 9, fototutorial en verplichte online iNaturalist-controle voor fotoresultaten. De online controle is een naamcheck, geen tweede beeldherkenningsmodel. De automatische videotelling is voorlopig." \
             --prerelease
 
